@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SocialLens — Live Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #0f1117;
+            color: #ffffff;
+            min-height: 100vh;
+            padding: 30px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(90deg, #2f32c8, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p {
+            color: #9ca3af;
+            margin-top: 8px;
+        }
+
+        .card {
+            background: #1e2130;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            border: 1px solid #2d3148;
+        }
+
+        .card h2 {
+            font-size: 1.1rem;
+            color: #a5b4fc;
+            margin-bottom: 16px;
+        }
+
+        textarea {
+            width: 100%;
+            background: #0f1117;
+            border: 1px solid #2d3148;
+            border-radius: 8px;
+            color: #fff;
+            padding: 12px;
+            font-size: 1rem;
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        textarea:focus { outline: none; border-color: #6366f1; }
+
+        button {
+            margin-top: 12px;
+            background: linear-gradient(90deg, #6366f1, #8b5cf6);
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        button:hover { opacity: 0.9; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .result-box {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .result-positive { background: #052e16; border: 1px solid #16a34a; }
+        .result-negative { background: #2d0a0a; border: 1px solid #dc2626; }
+
+        .sentiment-label {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .positive-label { color: #4ade80; }
+        .negative-label { color: #f87171; }
+
+        .confidence-bar-container {
+            margin-top: 16px;
+        }
+
+        .confidence-bar-container p {
+            color: #9ca3af;
+            font-size: 0.85rem;
+            margin-bottom: 6px;
+        }
+
+        .bar-bg {
+            background: #374151;
+            border-radius: 999px;
+            height: 10px;
+            width: 100%;
+        }
+
+        .bar-fill {
+            height: 10px;
+            border-radius: 999px;
+            transition: width 0.5s ease;
+        }
+
+        .bar-positive { background: #4ade80; }
+        .bar-negative { background: #f87171; }
+
+        .scores {
+            display: flex;
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .score-box {
+            flex: 1;
+            background: #0f1117;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .score-box span {
+            display: block;
+            font-size: 0.8rem;
+            color: #9ca3af;
+            margin-bottom: 4px;
+        }
+
+        .score-box strong {
+            font-size: 1.4rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        .stat-box {
+            background: #0f1117;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid #2d3148;
+        }
+
+        .stat-box .number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #a5b4fc;
+        }
+
+        .stat-box .label {
+            color: #9ca3af;
+            font-size: 0.85rem;
+            margin-top: 4px;
+        }
+
+        .batch-results {
+            margin-top: 16px;
+        }
+
+        .batch-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            background: #0f1117;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border: 1px solid #2d3148;
+        }
+
+        .batch-item .tweet-text {
+            color: #d1d5db;
+            font-size: 0.9rem;
+            flex: 1;
+            margin-right: 12px;
+        }
+
+        .badge {
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .badge-positive { background: #052e16; color: #4ade80; border: 1px solid #16a34a; }
+        .badge-negative { background: #2d0a0a; color: #f87171; border: 1px solid #dc2626; }
+
+        .loading { color: #9ca3af; text-align: center; padding: 20px; }
+
+        .api-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: #9ca3af;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+
+        .dot { width: 8px; height: 8px; border-radius: 50%; }
+        .dot-green { background: #4ade80; }
+        .dot-red { background: #f87171; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>🔍 SocialLens</h1>
+        <p>Social Media Analysis & Recommendation System</p>
+    </div>
+
+    <!-- API Status -->
+    <div class="api-status" id="apiStatus">
+        <div class="dot dot-red" id="statusDot"></div>
+        <span id="statusText">Checking API...</span>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="stats-grid" style="margin-bottom: 24px;">
+        <div class="stat-box">
+            <div class="number">72%</div>
+            <div class="label">Model Accuracy</div>
+        </div>
+        <div class="stat-box">
+            <div class="number">9,949</div>
+            <div class="label">Tweets Trained On</div>
+        </div>
+        <div class="stat-box">
+            <div class="number" id="totalAnalyzed">0</div>
+            <div class="label">Analysed This Session</div>
+        </div>
+    </div>
+
+    <!-- Single Tweet Analysis -->
+    <div class="card">
+        <h2>📝 Analyse a Tweet</h2>
+        <textarea id="tweetInput" placeholder="Type or paste a tweet here..."></textarea>
+        <button onclick="analyzeTweet()" id="analyzeBtn">Analyse Sentiment</button>
+
+        <div class="result-box" id="resultBox">
+            <div class="sentiment-label" id="sentimentLabel"></div>
+            <div style="color: #9ca3af; font-size: 0.9rem;" id="cleanedText"></div>
+
+            <div class="confidence-bar-container">
+                <p>Confidence: <strong id="confidenceText"></strong></p>
+                <div class="bar-bg">
+                    <div class="bar-fill" id="confidenceBar" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div class="scores">
+                <div class="score-box">
+                    <span>Positive Score</span>
+                    <strong style="color: #4ade80" id="positiveScore">-</strong>
+                </div>
+                <div class="score-box">
+                    <span>Negative Score</span>
+                    <strong style="color: #f87171" id="negativeScore">-</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Batch Analysis -->
+    <div class="card">
+        <h2>📊 Batch Analysis</h2>
+        <textarea id="batchInput"
+            placeholder="Enter multiple tweets, one per line...
+I love this new feature!
+This update broke everything.
+Just posted a new video today."></textarea>
+        <button onclick="analyzeBatch()" id="batchBtn">Analyse All Tweets</button>
+        <div class="batch-results" id="batchResults"></div>
+    </div>
+
+<script>
+    const API = 'http://localhost:5000';
+    let totalAnalyzed = 0;
+
+    // Check API health on load
+    async function checkHealth() {
+        try {
+            const res = await fetch(`${API}/health`);
+            const data = await res.json();
+            document.getElementById('statusDot').className = 'dot dot-green';
+            document.getElementById('statusText').textContent = 'API Connected — ' + data.status;
+        } catch {
+            document.getElementById('statusDot').className = 'dot dot-red';
+            document.getElementById('statusText').textContent = 'API Offline — make sure Flask is running';
+        }
+    }
+
+    async function analyzeTweet() {
+        const text = document.getElementById('tweetInput').value.trim();
+        if (!text) { alert('Please enter a tweet first.'); return; }
+
+        const btn = document.getElementById('analyzeBtn');
+        btn.disabled = true;
+        btn.textContent = 'Analysing...';
+
+        try {
+            const res = await fetch(`${API}/analyze`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text })
+            });
+
+            const data = await res.json();
+
+            // Update result box
+            const isPositive = data.sentiment === 'positive';
+            const box = document.getElementById('resultBox');
+            box.style.display = 'block';
+            box.className = 'result-box ' + (isPositive ? 'result-positive' : 'result-negative');
+
+            const label = document.getElementById('sentimentLabel');
+            label.textContent = isPositive ? '😊 Positive' : '😞 Negative';
+            label.className = 'sentiment-label ' + (isPositive ? 'positive-label' : 'negative-label');
+
+            document.getElementById('cleanedText').textContent = 'Cleaned: ' + data.cleaned_text;
+            document.getElementById('confidenceText').textContent = data.confidence + '%';
+
+            const bar = document.getElementById('confidenceBar');
+            bar.style.width = data.confidence + '%';
+            bar.className = 'bar-fill ' + (isPositive ? 'bar-positive' : 'bar-negative');
+
+            document.getElementById('positiveScore').textContent = data.scores.positive + '%';
+            document.getElementById('negativeScore').textContent = data.scores.negative + '%';
+
+            totalAnalyzed++;
+            document.getElementById('totalAnalyzed').textContent = totalAnalyzed;
+
+        } catch (err) {
+            alert('Error connecting to API. Make sure Flask is running on port 5000.');
+        }
+
+        btn.disabled = false;
+        btn.textContent = 'Analyse Sentiment';
+    }
+
+    async function analyzeBatch() {
+        const raw = document.getElementById('batchInput').value.trim();
+        if (!raw) { alert('Please enter some tweets first.'); return; }
+
+        const tweets = raw.split('\n').filter(t => t.trim() !== '');
+        const btn = document.getElementById('batchBtn');
+        btn.disabled = true;
+        btn.textContent = 'Analysing...';
+
+        const resultsDiv = document.getElementById('batchResults');
+        resultsDiv.innerHTML = '<div class="loading">Analysing ' + tweets.length + ' tweets...</div>';
+
+        try {
+            const res = await fetch(`${API}/analyze-batch`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tweets })
+            });
+
+            const data = await res.json();
+
+            let html = `
+                <div style="display:flex; gap:16px; margin-bottom:16px;">
+                    <div class="stat-box" style="flex:1">
+                        <div class="number" style="color:#4ade80">${data.positive_count}</div>
+                        <div class="label">Positive</div>
+                    </div>
+                    <div class="stat-box" style="flex:1">
+                        <div class="number" style="color:#f87171">${data.negative_count}</div>
+                        <div class="label">Negative</div>
+                    </div>
+                    <div class="stat-box" style="flex:1">
+                        <div class="number">${data.total}</div>
+                        <div class="label">Total</div>
+                    </div>
+                </div>
+            `;
+
+            data.results.forEach(r => {
+                const isPos = r.sentiment === 'positive';
+                html += `
+                    <div class="batch-item">
+                        <div class="tweet-text">${r.text}</div>
+                        <span class="badge ${isPos ? 'badge-positive' : 'badge-negative'}">
+                            ${isPos ? '😊 Positive' : '😞 Negative'} ${r.confidence}%
+                        </span>
+                    </div>
+                `;
+            });
+
+            resultsDiv.innerHTML = html;
+            totalAnalyzed += tweets.length;
+            document.getElementById('totalAnalyzed').textContent = totalAnalyzed;
+
+        } catch (err) {
+            resultsDiv.innerHTML = '<div class="loading">Error connecting to API.</div>';
+        }
+
+        btn.disabled = false;
+        btn.textContent = 'Analyse All Tweets';
+    }
+
+    // Run health check when page loads
+    checkHealth();
+</script>
+
+</body>
+</html>
